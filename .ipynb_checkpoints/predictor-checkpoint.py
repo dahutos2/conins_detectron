@@ -31,11 +31,16 @@ class Predictor:
         # 設定を決める
         cfg = get_cfg()
         yamlPath = "COCO-Detection/faster_rcnn_R_50_FPN_3x.yaml"  # mac
+
         cfg.merge_from_file(model_zoo.get_config_file(yamlPath))
         cfg.MODEL.ROI_HEADS.NUM_CLASSES = 4
+        cfg.DATALOADER.NUM_WORKERS = 2
+        cfg.MODEL.ROI_HEADS.BATCH_SIZE_PER_IMAGE = (128)
+        cfg.DATASETS.TRAIN = ("coins",)
+        cfg.DATASETS.TEST = ()
         cfg.MODEL.WEIGHTS = os.path.join(
             cfg.OUTPUT_DIR, "model_final.pth")
-        cfg.MODEL.ROI_HEADS.SCORE_THRESH_TEST = 0.8 # threshold（閾値）を設定します。この閾値より確度の高いもののみ出力されます。
+        cfg.MODEL.ROI_HEADS.SCORE_THRESH_TEST = 0.6
         cfg.MODEL.DEVICE = "cpu"
 
         # 予測器を作成
@@ -68,6 +73,7 @@ class Predictor:
         cash_data = [1, 5, 10, 100]
         cash_sum = 0
         for i, n in enumerate(classes_np):
-            cash_sum += cash_data[n]
+            if scores_np[i] > 0.8:
+                cash_sum += cash_data[n]
         self._outputs_cash = str(cash_sum) + "円"
         return self._outputs
